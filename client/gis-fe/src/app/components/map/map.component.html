@@ -1,4 +1,6 @@
 <div class="map"
      leaflet 
+     (leafletMapReady)="onMapReady($event)"
+     (leafletClick)="addMarker($event)"
      [leafletOptions]="options">
 </div>

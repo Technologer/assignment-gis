@@ -1,0 +1,33 @@
+<mat-toolbar class="header mat-elevation-z2">
+  <button mat-icon-button (click)="sidenav.toggle()">
+    <mat-icon>menu</mat-icon>
+  </button>
+  <span>Accidents</span>
+</mat-toolbar>
+
+<mat-sidenav-container class="sidenav-container">
+  <mat-sidenav
+    class="sidenav"
+    #sidenav
+    [autoFocus]="false"
+    [opened]="!isMobileOrTablet()"
+    [fixedInViewport]="false"
+    [mode]="isMobileOrTablet() ? 'over' : 'side'"
+  >
+    <div class="form-group">
+      <label for="distance">Distance</label>
+      <input
+        type="text"
+        class="form-control"
+        id="distance"
+        [(ngModel)]="distance"
+        name="distance"
+      />
+    </div>
+    <div>
+      <button mat-raised-button (click)="onButtonClick()">Search</button>
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content> <app-map></app-map> </mat-sidenav-content>
+</mat-sidenav-container>

@@ -1,4 +1,4 @@
-<mat-toolbar class="header mat-elevation-z2">
+<mat-toolbar class="header mat-elevation-z2" color="primary">
   <button mat-icon-button (click)="sidenav.toggle()">
     <mat-icon>menu</mat-icon>
   </button>
@@ -14,18 +14,75 @@
     [fixedInViewport]="false"
     [mode]="isMobileOrTablet() ? 'over' : 'side'"
   >
-    <div class="form-group">
-      <label for="distance">Distance</label>
-      <input
-        type="text"
-        class="form-control"
-        id="distance"
-        [(ngModel)]="distance"
-        name="distance"
-      />
+    <span class="group-title">Accidents in range</span>
+    <mat-divider></mat-divider>
+    <div class="form-group-default">
+      <div>Range: {{ distanceValue }}m</div>
+      <mat-slider
+        min="1"
+        max="5000"
+        step="1"
+        (input)="sliderChange($event)"
+        [(ngModel)]="distanceValue"
+      ></mat-slider>
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="onShowInRangeButtonClick()"
+      >
+        Search in range
+      </button>
     </div>
-    <div>
-      <button mat-raised-button (click)="onButtonClick()">Search</button>
+
+    <span class="group-title">Accidents on road</span>
+    <mat-divider></mat-divider>
+    <div class="form-group">
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="onShowOnRoadButtonClick()"
+      >
+        Show accidents
+      </button>
+    </div>
+
+    <span class="group-title">Accidents map</span>
+    <mat-divider></mat-divider>
+    <div class="form-group-default">
+      <mat-form-field>
+        <mat-select
+          placeholder="For"
+          [(ngModel)]="selectedMapType"
+          name="type"
+        >
+          <mat-option [value]="6"> Cities </mat-option>
+          <mat-option [value]="8"> Counties </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field *ngIf="selectedMapType === 8">
+        <mat-select
+          placeholder="City"
+          [(ngModel)]="selectedCity"
+          name="county"
+        >
+          <mat-option *ngFor="let city of citiesList" [value]="city.name">{{
+            city.name
+          }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="onShowRateMapButtonClick()"
+      >
+        Show map
+      </button>
+    </div>
+
+    <div class="commands">
+      <button mat-raised-button (click)="onClearButtonClick()">
+        Clear map
+      </button>
     </div>
   </mat-sidenav>
 

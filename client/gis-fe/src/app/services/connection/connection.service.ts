@@ -9,9 +9,34 @@ import { take } from 'rxjs/operators';
 export class ConnectionService {
   constructor(private http: HttpClient) {}
 
-  getPint(data): Observable<any> {
+  getAccidentsInRange(data): Observable<any> {
     return this.http
-      .post('http://localhost:5000/api/pdt', data)
+      .post('http://localhost:5000/api/accidents-in-range', data)
       .pipe(take(1));
+  }
+
+  getAccidentsOnRoad(data): Observable<any> {
+    return this.http
+      .post('http://localhost:5000/api/accidents-on-road', data)
+      .pipe(take(1));
+  }
+
+  getAccidentsCities(data): Observable<any> {
+    return this.http
+      .post('http://localhost:5000/api/accidents-cities', data)
+      .pipe(take(1));
+  }
+
+  getAccidentsCounties(data): Observable<any> {
+    return this.http
+      .post('http://localhost:5000/api/accidents-counties', data)
+      .pipe(take(1));
+  }
+
+  test(data): Observable<any> {
+    return this.http.post('http://localhost:5000/api/test', data).pipe(take(1));
+  }
+  getCities() {
+    return this.http.get('http://localhost:5000/api/cities').pipe(take(1));
   }
 }

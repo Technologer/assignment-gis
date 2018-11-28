@@ -2,5 +2,7 @@
      leaflet 
      (leafletMapReady)="onMapReady($event)"
      (leafletClick)="addMarker($event)"
-     [leafletOptions]="options">
+     [leafletOptions]="options"
+     [leafletLayers]="layers">
+     <div *ngIf="marker" [leafletLayer]="marker"></div>
 </div>

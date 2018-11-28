@@ -1,32 +1,67 @@
 .sidenav-container {
-    z-index: -1;
-    position: absolute;
-    top: 52px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-  }
-  
+  z-index: -1;
+  position: absolute;
+  top: 52px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.sidenav {
+  padding: 20px 20px;
+  display: flex;
+  justify-content: center;
+  width: 350px;
+  background: white;
+  border-right: 1px solid rgb(224, 224, 224);
+}
+
+@media only screen and (max-width: 600px) {
   .sidenav {
-    padding: 20px 20px;
-    display: flex;
-    justify-content: center;
-    width: 350px;
-    background: white;
-    border-right: 1px solid rgb(224, 224, 224);
+    width: 100%;
   }
-  
-  @media only screen and (max-width: 600px) {
-    .sidenav {
-      width: 100%;
-    }
+}
+
+.header {
+  height: 56px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+}
+
+mat-divider {
+  margin: 3px 0 15px 0;
+}
+
+.form-group {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 50px;
+  .mat-form-field {
+    height: 36px;
   }
-  
-  .header {
-    height: 56px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
+  button {
+    float: right;
   }
-  
+  .range {
+    width: 70px;
+  }
+}
+
+.form-group-default {
+  mat-form-field, mat-slider {
+    width: 100%
+  }
+  margin-bottom: 50px;
+}
+
+.group-title {
+  font-family: Roboto, 'Helvetica Neue', sans-serif;
+  font-size: 0.8em;
+  color: rgb(95, 95, 95);
+}
+
+.commands {
+  margin: 50px 0;
+}

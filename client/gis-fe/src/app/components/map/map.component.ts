@@ -1,12 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import * as L from 'leaflet';
 import { ConnectionService } from 'src/app/services/connection/connection.service';
 import { tap } from 'rxjs/operators';
-import { ParamService } from 'src/app/services/param/param.service';
 import {
   greenMarkerIcon,
   blueMarkerIcon
 } from './../../shared/marker-icons/marker-icons';
+import { marker, tileLayer, latLng, geoJSON } from 'leaflet';
 
 @Component({
   selector: 'app-map',
@@ -15,60 +14,195 @@ import {
 })
 export class MapComponent implements OnInit {
   options: any;
-  layersControl: any;
   mapElement: L.Map;
   marker: L.Marker;
-  greenMarkerIcon: L.Icon;
+  layers: L.Layer[] = [];
+  selectedMapType: any;
 
   constructor(
     private connectionService: ConnectionService,
-    private paramService: ParamService
   ) {}
 
   ngOnInit() {
     this.options = {
       layers: [
-        L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          maxZoom: 18,
-          attribution: '...'
+        tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 18
         })
       ],
       zoom: 8,
-      center: L.latLng(50.7294878, -0.3321634)
+      center: latLng(50.7294878, -0.3321634)
     };
   }
 
   onMapReady(mapElement: L.Map) {
     this.mapElement = mapElement;
 
-    this.paramService.value.subscribe(options => {
+    // testing
+    // this.connectionService
+    //     .test({})
+    //     .pipe(
+    //       tap(data => {
+    //         L.geoJSON(data, {
+    //           style: style
+    //         }).addTo(mapElement);
+    //       })
+    //     )
+    //     .subscribe();
+  }
+
+  showAccidentsInRange(distance) {
+    if (!this.marker) {
+      alert('Please select a point on the map');
+      return;
+    }
+    this.clearMap();
+    this.connectionService
+      .getAccidentsInRange({
+        distance: parseFloat(distance),
+        latlng: this.marker.getLatLng()
+      })
+      .pipe(
+        tap(data => {
+          if (!data.length) {
+            alert('No accidents found in chosen range');
+          }
+          const layer = geoJSON(data, {
+            onEachFeature: onEachFeature
+          });
+          this.layers.push(layer);
+        })
+      )
+      .subscribe();
+  }
+
+  showAccidentsRateMap(city?: string) {
+    this.clearMap();
+    if (city) {
       this.connectionService
-        .getPint({data: options})
+        .getAccidentsCounties({ city })
         .pipe(
           tap(data => {
-            L.geoJSON(data, {
-              pointToLayer: (feature, latlng) => {
-                return L.marker(latlng, { icon: blueMarkerIcon });
-              }
-            }).addTo(mapElement);
-            // data.map(item => L.marker([item.latitude, item.longitude]).addTo(mapElement));
+            const layer = geoJSON(data, {
+              style: style
+            });
+            this.layers.push(layer);
           })
         )
         .subscribe();
-    });
+    } else {
+      this.connectionService
+        .getAccidentsCities({})
+        .pipe(
+          tap(data => {
+            const layer = geoJSON(data, {
+              style: style
+            });
+            this.layers.push(layer);
+          })
+        )
+        .subscribe();
+    }
+  }
 
-    L.marker([51.54968430132381, -0.12810230255126956], {
-      icon: greenMarkerIcon
-    }).addTo(this.mapElement);
+  showAccidentsOnRoad() {
+    if (!this.marker) {
+      alert('Please select point on road');
+      return;
+    }
+    this.clearMap();
+    this.connectionService
+      .getAccidentsOnRoad({
+        latlng: this.marker.getLatLng()
+      })
+      .pipe(
+        tap(data => {
+          if (!data.length) {
+            alert('No accidents found on chosen road');
+          }
+          const layer = geoJSON(data, {
+            pointToLayer: (feature, latlng) => {
+              return marker(latlng, { icon: blueMarkerIcon });
+            }
+          });
+          this.layers.push(layer);
+        })
+      )
+      .subscribe();
   }
 
   addMarker(event) {
     if (this.marker) {
-      this.mapElement.removeLayer(this.marker);
+      this.marker = null;
     }
-    this.marker = L.marker(event.latlng, {
+    this.marker = marker(event.latlng, {
       icon: greenMarkerIcon
-    }).addTo(this.mapElement);
+    });
+    this.marker.bindTooltip('Main point');
+    this.marker.on('click', () => {
+      this.marker.remove();
+      this.marker = null;
+    });
     console.log(this.marker.getLatLng());
+  }
+
+  clearMap() {
+    this.layers = [];
+  }
+}
+
+function getColor(value) {
+  return value > 1000
+    ? '#800026'
+    : value > 500
+    ? '#BD0026'
+    : value > 200
+    ? '#E31A1C'
+    : value > 100
+    ? '#FC4E2A'
+    : value > 50
+    ? '#FD8D3C'
+    : value > 20
+    ? '#FEB24C'
+    : value > 10
+    ? '#FED976'
+    : '#FFEDA0';
+}
+
+function style(feature) {
+  return {
+    fillColor: getColor(feature.properties.accidents_count),
+    weight: 2,
+    opacity: 1,
+    color: 'white',
+    dashArray: '3',
+    fillOpacity: 0.7
+  };
+}
+
+// const max = Math.max.apply(
+//   Math,
+//   data.map(item => item.properties.accidents_count)
+// );
+
+// const min = Math.min.apply(
+//   Math,
+//   data.map(item => item.properties.accidents_count)
+// );
+// console.log(max, min);
+
+function onEachFeature(feature, layer) {
+  if (feature.properties && feature.geometry.type === 'Point') {
+    layer.bindPopup(`
+      <div class="popup-accidents-range">
+        <h3>Accident</h3>
+        <ul>
+          <li>Distance: ${feature.properties.distance}</li>
+          <li>Number of vehicles: ${feature.properties.numberOfVehicle}</li>
+          <li>Date: ${feature.properties.date}</li>
+          <li>Time: ${feature.properties.time}</li>
+        </ul>
+      </div>
+    `);
   }
 }

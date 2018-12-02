@@ -32,42 +32,54 @@
       >
         Search in range
       </button>
+      <div class="clearfix"></div>
     </div>
 
-    <span class="group-title">Accidents on road</span>
+    <span class="group-title">Dangerous roads near school</span>
     <mat-divider></mat-divider>
-    <div class="form-group">
+    <div class="form-group-default">
+      <mat-form-field>
+        <mat-select
+          placeholder="City"
+          [(ngModel)]="selectedCity"
+          name="county"
+          (selectionChange)="onCitySelect($event)"
+        >
+          <mat-option *ngFor="let city of citiesEnum" [value]="city">{{
+            city
+          }}</mat-option>
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field>
+        <mat-select
+          placeholder="School"
+          [(ngModel)]="selectedSchool"
+          name="school"
+          (selectionChange)="onSchoolSelect($event)"
+        >
+          <mat-option *ngFor="let school of schools" [value]="school.id">{{
+            school.name
+          }}</mat-option>
+        </mat-select>
+      </mat-form-field>
       <button
         mat-raised-button
         color="primary"
-        (click)="onShowOnRoadButtonClick()"
+        (click)="onShowAccidentsSchoolClick()"
       >
-        Show accidents
+        Show
       </button>
+      <div class="clearfix"></div>
     </div>
 
     <span class="group-title">Accidents map</span>
     <mat-divider></mat-divider>
     <div class="form-group-default">
       <mat-form-field>
-        <mat-select
-          placeholder="For"
-          [(ngModel)]="selectedMapType"
-          name="type"
-        >
-          <mat-option [value]="6"> Cities </mat-option>
-          <mat-option [value]="8"> Counties </mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field *ngIf="selectedMapType === 8">
-        <mat-select
-          placeholder="City"
-          [(ngModel)]="selectedCity"
-          name="county"
-        >
-          <mat-option *ngFor="let city of citiesList" [value]="city.name">{{
-            city.name
-          }}</mat-option>
+        <mat-select placeholder="For" [(ngModel)]="selectedMapType" name="type">
+          <mat-option [value]="5"> Regions </mat-option>
+          <mat-option [value]="6"> Counties </mat-option>
+          <mat-option [value]="8"> Districts </mat-option>
         </mat-select>
       </mat-form-field>
       <button
@@ -76,6 +88,19 @@
         (click)="onShowRateMapButtonClick()"
       >
         Show map
+      </button>
+      <div class="clearfix"></div>
+    </div>
+
+    <span class="group-title">Accidents on road</span>
+    <mat-divider></mat-divider>
+    <div class="form-group-default">
+      <button
+        mat-raised-button
+        color="primary"
+        (click)="onShowOnRoadButtonClick()"
+      >
+        Show accidents
       </button>
     </div>
 

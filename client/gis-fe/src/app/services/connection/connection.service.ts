@@ -3,6 +3,7 @@ import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { take } from 'rxjs/operators';
 
+const BASE_URL = 'http://localhost:5000';
 @Injectable({
   providedIn: 'root'
 })
@@ -11,32 +12,35 @@ export class ConnectionService {
 
   getAccidentsInRange(data): Observable<any> {
     return this.http
-      .post('http://localhost:5000/api/accidents-in-range', data)
+      .post(`${BASE_URL}/api/accidents-in-range`, data)
       .pipe(take(1));
   }
 
   getAccidentsOnRoad(data): Observable<any> {
     return this.http
-      .post('http://localhost:5000/api/accidents-on-road', data)
+      .post(`${BASE_URL}/api/accidents-on-road`, data)
       .pipe(take(1));
   }
 
-  getAccidentsCities(data): Observable<any> {
+  getAccidentsArea(data): Observable<any> {
+    return this.http.post(`${BASE_URL}/api/accidents-area`, data).pipe(take(1));
+  }
+
+  getSchoolsList(data): Observable<any> {
     return this.http
-      .post('http://localhost:5000/api/accidents-cities', data)
+      .get(`${BASE_URL}/api/schools`, { params: data })
       .pipe(take(1));
   }
 
-  getAccidentsCounties(data): Observable<any> {
+  getSchool(data): Observable<any> {
     return this.http
-      .post('http://localhost:5000/api/accidents-counties', data)
+      .get(`${BASE_URL}/api/school`, { params: data })
       .pipe(take(1));
   }
 
-  test(data): Observable<any> {
-    return this.http.post('http://localhost:5000/api/test', data).pipe(take(1));
-  }
-  getCities() {
-    return this.http.get('http://localhost:5000/api/cities').pipe(take(1));
+  getAccidentsNearSchool(data): Observable<any> {
+    return this.http
+      .get(`${BASE_URL}/api/accidents-school`, { params: data })
+      .pipe(take(1));
   }
 }

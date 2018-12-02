@@ -37,7 +37,7 @@ mat-divider {
 .form-group {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 50px;
+  margin-bottom: 30px;
   .mat-form-field {
     height: 36px;
   }
@@ -50,10 +50,19 @@ mat-divider {
 }
 
 .form-group-default {
-  mat-form-field, mat-slider {
-    width: 100%
+  mat-form-field,
+  mat-slider {
+    width: 100%;
   }
-  margin-bottom: 50px;
+  margin-bottom: 30px;
+
+  button {
+    float: right;
+  }
+}
+
+.clearfix {
+  clear: both;
 }
 
 .group-title {

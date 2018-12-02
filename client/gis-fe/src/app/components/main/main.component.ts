@@ -2,6 +2,7 @@ import { Component, ViewChild, OnInit } from '@angular/core';
 import { MediaMatcher } from '@angular/cdk/layout';
 import { MapComponent } from '../map/map.component';
 import { ConnectionService } from 'src/app/services/connection/connection.service';
+import { cities } from './../../shared/cities-enum';
 
 @Component({
   selector: 'app-main',
@@ -13,20 +14,18 @@ export class MainComponent implements OnInit {
   private mapComponent: MapComponent;
 
   distanceValue = 100;
-  selectedMapType = 6;
-  citiesList: any;
+  selectedMapType = 5;
   selectedCity: any;
+  citiesEnum = cities.sort();
+  schools: any;
+  selectedSchool: any;
 
   constructor(
     private media: MediaMatcher,
     private connService: ConnectionService
   ) {}
 
-  ngOnInit() {
-    this.connService
-      .getCities()
-      .subscribe(cities => (this.citiesList = cities));
-  }
+  ngOnInit() {}
 
   onShowInRangeButtonClick() {
     this.mapComponent.showAccidentsInRange(this.distanceValue);
@@ -37,10 +36,8 @@ export class MainComponent implements OnInit {
   }
 
   onShowRateMapButtonClick() {
-    if (this.selectedCity && this.selectedMapType === 8) {
-      this.mapComponent.showAccidentsRateMap(this.selectedCity);
-    } else {
-      this.mapComponent.showAccidentsRateMap();
+    if (this.selectedMapType) {
+      this.mapComponent.showAccidentsRateMap(this.selectedMapType);
     }
   }
 
@@ -50,6 +47,20 @@ export class MainComponent implements OnInit {
 
   sliderChange(event) {
     this.distanceValue = event.value;
+  }
+
+  onCitySelect(event) {
+    this.connService
+      .getSchoolsList({ city: event.value })
+      .subscribe(data => (this.schools = data));
+  }
+
+  onSchoolSelect(event) {
+    this.mapComponent.showSchool(event.value);
+  }
+
+  onShowAccidentsSchoolClick() {
+    this.mapComponent.showAccidentsNearSchool(this.selectedSchool);
   }
 
   isMobileOrTablet(): Boolean {

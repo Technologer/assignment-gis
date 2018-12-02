@@ -29,14 +29,15 @@ app.post('/api/accidents-on-road', (req, res) => {
         LIMIT 1
     ),
     road_accidents as (
-      SELECT geom FROM accidents07 a JOIN road r 
+      SELECT *
+      FROM accidents07 a JOIN road r 
       ON 
       st_dwithin(r.way::geography ,a.geom::geography, 10)
     )
     
-    SELECT st_asgeojson(way) as geo FROM road
+    SELECT st_asgeojson(geom) as geo, accident_date, acccident_time as accident_time, number_of_vehicle FROM road_accidents
     UNION ALL 
-    SELECT st_asgeojson(geom) as geo FROM road_accidents`,
+    SELECT st_asgeojson(way) as geo, NULL, NULL, NULL FROM road`,
     [req.body.latlng.lng, req.body.latlng.lat],
 
     (err, data) => {
@@ -45,14 +46,12 @@ app.post('/api/accidents-on-road', (req, res) => {
       } else {
         const response = data.rows.map(row => {
           let geoJSON = JSON.parse(row.geo);
-          console.log(geoJSON);
-          return Object.assign(
-            {
-              type: 'Feature',
-              geometry: geoJSON
-            },
-            {}
-          );
+          console.log(row);
+          return createFeature(geoJSON, {
+            date: row.accident_date,
+            time: row.accident_time,
+            numberOfVehicle: row.number_of_vehicle
+          });
         });
         res.send(response);
       }
@@ -60,16 +59,13 @@ app.post('/api/accidents-on-road', (req, res) => {
   );
 });
 
-app.post('/api/accidents-cities', (req, res) => {
+app.post('/api/accidents-area', (req, res) => {
   db.query(
-    `SELECT tab1.name, tab1.count, st_asgeojson(tab2.way) as polygon FROM (SELECT d.osm_id, d.name, count(*)
-      from accidents07 a 
-      JOIN 
-      (SELECT DISTINCT * FROM planet_osm_polygon WHERE boundary=$1 AND admin_level=$2) d 
-      ON ST_Within(a.geom, d.way)
-      GROUP BY d.name, d.osm_id) tab1
-	    JOIN planet_osm_polygon tab2 ON tab1.osm_id = tab2.osm_id`,
-    ['administrative', '6'],
+    `SELECT tab2.name, tab1.count, st_asgeojson(tab2.way) as polygon, tab1.area
+     FROM accidents_in_admin_level tab1
+     JOIN planet_osm_polygon tab2 ON tab1.id = tab2.id
+     WHERE tab1.admin_level = $1`,
+    [req.body.adminLevel],
 
     (err, data) => {
       if (err) {
@@ -78,17 +74,11 @@ app.post('/api/accidents-cities', (req, res) => {
         res.send(
           data.rows.map(row => {
             let geoJSON = JSON.parse(row.polygon);
-            return Object.assign(
-              {
-                type: 'Feature',
-                properties: {
-                  accidents_count: row.count,
-                  district_name: row.name
-                },
-                geometry: geoJSON
-              },
-              {}
-            );
+            return createFeature(geoJSON, {
+              accidentsCount: row.count,
+              areaName: row.name,
+              area: row.area
+            });
           })
         );
       }
@@ -121,17 +111,10 @@ app.post('/api/accidents-counties', (req, res) => {
         res.send(
           data.rows.map(row => {
             let geoJSON = JSON.parse(row.polygon);
-            return Object.assign(
-              {
-                type: 'Feature',
-                properties: {
-                  accidents_count: row.count,
-                  district_name: row.name
-                },
-                geometry: geoJSON
-              },
-              {}
-            );
+            return createFeature(geoJSON, {
+              accidents_count: row.count,
+              district_name: row.name
+            });
           })
         );
       }
@@ -158,19 +141,12 @@ app.post('/api/accidents-in-range', (req, res) => {
         res.send(
           data.rows.map(item => {
             let geoJSON = JSON.parse(item.st_asgeojson);
-            return Object.assign(
-              {
-                type: 'Feature',
-                properties: {
-                  distance: item.distance,
-                  date: item.accident_date,
-                  time: item.accident_time,
-                  numberOfVehicle: item.number_of_vehicle
-                },
-                geometry: geoJSON
-              },
-              {}
-            );
+            return createFeature(geoJSON, {
+              distance: item.distance,
+              date: item.accident_date,
+              time: item.accident_time,
+              numberOfVehicle: item.number_of_vehicle
+            });
           })
         );
       }
@@ -178,41 +154,14 @@ app.post('/api/accidents-in-range', (req, res) => {
   );
 });
 
-app.post('/api/test', (req, res) => {
+app.get('/api/schools', (req, res) => {
   db.query(
-    `SELECT st_asgeojson(way) 
-    FROM planet_osm_polygon WHERE boundary='administrative' AND admin_level='6' AND name='City of London'`,
-    [],
-    (err, data) => {
-      if (err) {
-        res.send(err);
-      } else {
-        res.send(
-          data.rows.map(item => {
-            let geoJSON = JSON.parse(item.st_asgeojson);
-            return Object.assign(
-              {
-                type: 'Feature',
-                properties: {
-                  name: 'Coors Field',
-                  amenity: 'Baseball Stadium',
-                  popupContent: 'This is where the Rockies play!'
-                },
-                geometry: geoJSON
-              },
-              {}
-            );
-          })
-        );
-      }
-    }
-  );
-});
-
-app.get('/api/cities', (req, res) => {
-  db.query(
-    `SELECT DISTINCT name FROM planet_osm_polygon WHERE boundary='administrative' AND admin_level='6' AND name is not NULL`,
-    [],
+    `SELECT tab2.name, tab2.id FROM 
+    (SELECT way from planet_osm_polygon WHERE name=$1 AND admin_level is not NULL) tab1
+    JOIN
+    (SELECT name, way, id FROM planet_osm_polygon WHERE (building in ('school', 'university') OR amenity='collage') AND name is not NULL) tab2
+    ON st_contains(tab1.way, tab2.way)`,
+    [req.query.city],
     (err, data) => {
       if (err) {
         res.send(err);
@@ -223,6 +172,65 @@ app.get('/api/cities', (req, res) => {
   );
 });
 
+app.get('/api/accidents-school', (req, res) => {
+  db.query(
+    `WITH 	school as (SELECT way FROM planet_osm_polygon WHERE id=$1),
+    accidents as (SELECT * FROM accidents07 a JOIN school s on st_dwithin(s.way::geography , a.geom::geography, 300)),
+    lines as (SELECT ST_Intersection(tab1.range, tab2.way) as intersection FROM 
+        (SELECT st_buffer(way::geography, 300) as range FROM school) tab1
+          JOIN
+          (SELECT way, name from planet_osm_line WHERE highway is not NULL AND highway!='footway') tab2
+          ON st_intersects(tab1.range, tab2.way)),
+  accidents_on_roads as (SELECT * FROM accidents a RIGHT JOIN lines r ON st_dwithin(r.intersection::geography ,a.geom::geography, 5))
+  SELECT st_asgeojson(intersection) as way, count(*) from accidents_on_roads GROUP BY intersection`,
+    [req.query.schoolId],
+    (err, data) => {
+      if (err) {
+        res.send(err);
+      } else {
+        res.send(
+          data.rows.map(row => {
+            let geoJSON = JSON.parse(row.way);
+            return createFeature(geoJSON, {
+              accidentsCount: row.count
+            });
+          })
+        );
+      }
+    }
+  );
+});
+
+app.get('/api/school', (req, res) => {
+  db.query(
+    `SELECT name, st_asgeojson(way) as way
+    FROM planet_osm_polygon WHERE id=$1`,
+    [req.query.schoolId],
+    (err, data) => {
+      if (err) {
+        res.send(err);
+      } else {
+        res.send(
+          data.rows.map(row => {
+            let geoJSON = JSON.parse(row.way);
+            return createFeature(geoJSON, {
+              name: row.name
+            });
+          })
+        );
+      }
+    }
+  );
+});
+
 app.listen(PORT, () => {
   console.log(`server running on port ${PORT}`);
 });
+
+function createFeature(geoJSON, properties) {
+  return {
+    type: 'Feature',
+    properties: properties,
+    geometry: geoJSON
+  };
+}

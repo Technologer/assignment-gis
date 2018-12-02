@@ -18,7 +18,7 @@ app.use(function(req, res, next) {
   next();
 });
 
-app.post('/api/accidents-on-road', (req, res) => {
+app.get('/api/accidents-on-road', (req, res) => {
   db.query(
     `WITH road as (
       SELECT way FROM 
@@ -38,7 +38,7 @@ app.post('/api/accidents-on-road', (req, res) => {
     SELECT st_asgeojson(geom) as geo, accident_date, acccident_time as accident_time, number_of_vehicle FROM road_accidents
     UNION ALL 
     SELECT st_asgeojson(way) as geo, NULL, NULL, NULL FROM road`,
-    [req.body.latlng.lng, req.body.latlng.lat],
+    [req.query.lng, req.query.lat],
 
     (err, data) => {
       if (err) {
@@ -59,13 +59,12 @@ app.post('/api/accidents-on-road', (req, res) => {
   );
 });
 
-app.post('/api/accidents-area', (req, res) => {
+app.get('/api/accidents-area', (req, res) => {
   db.query(
-    `SELECT tab2.name, tab1.count, st_asgeojson(tab2.way) as polygon, tab1.area
-     FROM accidents_in_admin_level tab1
-     JOIN planet_osm_polygon tab2 ON tab1.id = tab2.id
-     WHERE tab1.admin_level = $1`,
-    [req.body.adminLevel],
+    `SELECT name, count, st_asgeojson(way) as polygon, area
+    FROM accidents_in_admin_level
+    WHERE admin_level=$1`,
+    [req.query.adminLevel],
 
     (err, data) => {
       if (err) {
@@ -86,43 +85,7 @@ app.post('/api/accidents-area', (req, res) => {
   );
 });
 
-app.post('/api/accidents-counties', (req, res) => {
-  db.query(
-    `WITH counties as (SELECT counties.osm_id, counties.name, counties.way FROM
-      (SELECT * FROM planet_osm_polygon WHERE boundary='administrative' AND admin_level='6' AND name=$1) city
-      JOIN
-      (SELECT * FROM planet_osm_polygon WHERE boundary='administrative' AND admin_level='8') counties
-      ON st_contains(city.way, counties.way)
-    )
-    SELECT tab1.name, tab1.count, st_asgeojson(tab2.way) as polygon 
-    FROM 
-    (SELECT d.osm_id, d.name, count(*)
-          from accidents07 a 
-          JOIN counties d 
-          ON ST_Within(a.geom, d.way)
-          GROUP BY d.name, d.osm_id) tab1
-          JOIN planet_osm_polygon tab2 ON tab1.osm_id = tab2.osm_id`,
-    [req.body.city],
-
-    (err, data) => {
-      if (err) {
-        res.send(err);
-      } else {
-        res.send(
-          data.rows.map(row => {
-            let geoJSON = JSON.parse(row.polygon);
-            return createFeature(geoJSON, {
-              accidents_count: row.count,
-              district_name: row.name
-            });
-          })
-        );
-      }
-    }
-  );
-});
-
-app.post('/api/accidents-in-range', (req, res) => {
+app.get('/api/accidents-in-range', (req, res) => {
   db.query(
     `
     WITH center_point as (SELECT st_setsrid(st_point($1, $2), 4326)::geography as geom)
@@ -133,7 +96,7 @@ app.post('/api/accidents-in-range', (req, res) => {
       UNION ALL
       SELECT st_asgeojson(st_buffer(geom, $3)), null, null, null, null FROM center_point
       `,
-    [req.body.latlng.lng, req.body.latlng.lat, req.body.distance],
+    [req.query.lng, req.query.lat, req.query.distance],
     (err, data) => {
       if (err) {
         res.send(err);
@@ -182,7 +145,7 @@ app.get('/api/accidents-school', (req, res) => {
           (SELECT way, name from planet_osm_line WHERE highway is not NULL AND highway!='footway') tab2
           ON st_intersects(tab1.range, tab2.way)),
   accidents_on_roads as (SELECT * FROM accidents a RIGHT JOIN lines r ON st_dwithin(r.intersection::geography ,a.geom::geography, 5))
-  SELECT st_asgeojson(intersection) as way, count(*) from accidents_on_roads GROUP BY intersection`,
+  SELECT st_asgeojson(intersection) as way, count(accident_index) from accidents_on_roads GROUP BY intersection`,
     [req.query.schoolId],
     (err, data) => {
       if (err) {

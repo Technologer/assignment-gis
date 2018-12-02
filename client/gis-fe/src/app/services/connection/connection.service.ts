@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { take } from 'rxjs/operators';
 
@@ -8,22 +8,23 @@ const BASE_URL = 'http://localhost:5000';
   providedIn: 'root'
 })
 export class ConnectionService {
+  loader: Subject<Boolean> = new Subject();
   constructor(private http: HttpClient) {}
 
   getAccidentsInRange(data): Observable<any> {
     return this.http
-      .post(`${BASE_URL}/api/accidents-in-range`, data)
+      .get(`${BASE_URL}/api/accidents-in-range`, { params: data })
       .pipe(take(1));
   }
 
   getAccidentsOnRoad(data): Observable<any> {
     return this.http
-      .post(`${BASE_URL}/api/accidents-on-road`, data)
+      .get(`${BASE_URL}/api/accidents-on-road`, { params: data })
       .pipe(take(1));
   }
 
   getAccidentsArea(data): Observable<any> {
-    return this.http.post(`${BASE_URL}/api/accidents-area`, data).pipe(take(1));
+    return this.http.get(`${BASE_URL}/api/accidents-area`, { params: data }).pipe(take(1));
   }
 
   getSchoolsList(data): Observable<any> {

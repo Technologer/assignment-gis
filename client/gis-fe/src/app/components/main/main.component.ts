@@ -1,4 +1,4 @@
-import { Component, ViewChild, OnInit } from '@angular/core';
+import { Component, ViewChild, OnInit, ChangeDetectorRef } from '@angular/core';
 import { MediaMatcher } from '@angular/cdk/layout';
 import { MapComponent } from '../map/map.component';
 import { ConnectionService } from 'src/app/services/connection/connection.service';
@@ -12,7 +12,7 @@ import { cities } from './../../shared/cities-enum';
 export class MainComponent implements OnInit {
   @ViewChild(MapComponent)
   private mapComponent: MapComponent;
-
+  loader: Boolean;
   distanceValue = 100;
   selectedMapType = 5;
   selectedCity: any;
@@ -22,10 +22,14 @@ export class MainComponent implements OnInit {
 
   constructor(
     private media: MediaMatcher,
-    private connService: ConnectionService
+    private connService: ConnectionService,
+    private changeDetector: ChangeDetectorRef
   ) {}
 
-  ngOnInit() {}
+  ngOnInit() {
+    this.connService.loader.subscribe(val => (this.loader = val));
+    this.changeDetector.detectChanges();
+  }
 
   onShowInRangeButtonClick() {
     this.mapComponent.showAccidentsInRange(this.distanceValue);

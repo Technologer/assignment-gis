@@ -196,7 +196,7 @@ CREATE INDEX accidents07_geom_geography_index ON accidents07 USING gist (geograp
 CREATE INDEX planet_osm_geography_index ON planet_osm_line USING gis (geography(way))
 CREATE INDEX highway_index ON planet_osm_line (highway)
 CREATE INDEX planet_osm_polygon_geography_index ON planet_osm_polygon USING gist (geography(way))
-CREATE INDEX planet_osm_polygon_id_index ON planet_osm_polygon (osm_id)
-CREATE INDEX planet_osm_polygon_admin_level_index ON planet_osm_polygon (admin_level)
 CREATE INDEX accidents_view_admin_level_index ON accidents_in_admin_level (admin_level)
+CREATE INDEX planet_osm_polygon_name_admin_level_index ON planet_osm_polygon (name, admin_level)
+
 ```

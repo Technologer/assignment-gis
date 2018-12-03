@@ -20,6 +20,8 @@ Build a map-based application, which lets the user see geo-based data on a map a
 
 Fill in (either in English, or in Slovak):
 
+**Student name**: Ján Vnenčák
+
 **Application description**: Webová aplikácia,  ktorá umožňuje zobrazovať dopravné nehody a nehodové úseky v Anglicku.
 
 **Data source**: `OSM`, [Road Safety](https://data.gov.uk/dataset/cb7ae6f0-4be6-4935-9277-47e5ce24a11f/road-safety-data)

@@ -1,3 +1,4 @@
+# PDT - Ján Vnenčák
 # Prehľad
 
 Aplikácia zobrazuje dopravné nehody na celom území Anglicka. Aplikácia umožňuje:
